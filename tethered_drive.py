@@ -51,8 +51,8 @@ except ImportError:
 
 connection = None
 
-TEXTWIDTH = 40 # window width, in characters
-TEXTHEIGHT = 16 # window height, in lines
+TEXTWIDTH = 80 # window width, in characters
+TEXTHEIGHT = 48 # window height, in lines
 
 VELOCITYCHANGE = 200
 ROTATIONCHANGE = 300
@@ -71,12 +71,17 @@ Arrows\tMotion
 If nothing happens after you connect, try pressing 'P' and then 'S' to get into safe mode.
 """
 
+command = {"passive": "128",
+           "safe"   : "131",
+           "full"   : "132",
+           "clean"  : "135",
+           "dock"   : "143",
+           "beep"   : "140 3 1 64 16 141 3",
+           "reset"  : "7"}
+    
+
 class TetheredDriveApp(Tk):
-    # static variables for keyboard callback -- I know, this is icky
-    callbackKeyUp = False
-    callbackKeyDown = False
-    callbackKeyLeft = False
-    callbackKeyRight = False
+    keyPressed = {s:False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
     callbackKeyLastDriveCommand = ''
 
     def __init__(self):
@@ -172,55 +177,33 @@ class TetheredDriveApp(Tk):
         motionChange = False
 
         if event.type == '2': # KeyPress; need to figure out how to get constant
-            if k == 'P':   # Passive
-                self.sendCommandASCII('128')
-            elif k == 'S': # Safe
-                self.sendCommandASCII('131')
-            elif k == 'F': # Full
-                self.sendCommandASCII('132')
-            elif k == 'C': # Clean
-                self.sendCommandASCII('135')
-            elif k == 'D': # Dock
-                self.sendCommandASCII('143')
-            elif k == 'SPACE': # Beep
-                self.sendCommandASCII('140 3 1 64 16 141 3')
-            elif k == 'R': # Reset
-                self.sendCommandASCII('7')
-            elif k == 'UP':
-                self.callbackKeyUp = True
+            key_map = {"P"     : "passive",
+                       "S"     : "safe",
+                       "F"     : "full",
+                       "C"     : "clean",
+                       "D"     : "dock",
+                       "SPACE" : "beep",
+                       "R"     : "reset"
+                       }
+
+            if k in key_map:
+                self.sendCommandASCII(command[key_map[k]])
+            elif k in self.keyPressed:
                 motionChange = True
-            elif k == 'DOWN':
-                self.callbackKeyDown = True
-                motionChange = True
-            elif k == 'LEFT':
-                self.callbackKeyLeft = True
-                motionChange = True
-            elif k == 'RIGHT':
-                self.callbackKeyRight = True
-                motionChange = True
+                self.keyPressed[k] = True
             else:
                 print repr(k), "not handled"
         elif event.type == '3': # KeyRelease; need to figure out how to get constant
-            if k == 'UP':
-                self.callbackKeyUp = False
-                motionChange = True
-            elif k == 'DOWN':
-                self.callbackKeyDown = False
-                motionChange = True
-            elif k == 'LEFT':
-                self.callbackKeyLeft = False
-                motionChange = True
-            elif k == 'RIGHT':
-                self.callbackKeyRight = False
-                motionChange = True
+            # print k, "released"
+
             
-        if motionChange == True:
-            velocity = 0
-            velocity += VELOCITYCHANGE if self.callbackKeyUp is True else 0
-            velocity -= VELOCITYCHANGE if self.callbackKeyDown is True else 0
-            rotation = 0
-            rotation += ROTATIONCHANGE if self.callbackKeyLeft is True else 0
-            rotation -= ROTATIONCHANGE if self.callbackKeyRight is True else 0
+            if k in self.keyPressed:
+                motionChange = True
+                self.keyPressed[k] = False
+            
+        if motionChange:
+            velocity = VELOCITYCHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
+            rotation = ROTATIONCHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
 
             # compute left and right wheel velocities
             vr = velocity + (rotation/2)
