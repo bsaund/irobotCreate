@@ -36,7 +36,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###########################################################################
 
-from Tkinter import *
+# from Tkinter import *
+import Tkinter as tk
 import tkMessageBox
 import tkSimpleDialog
 
@@ -46,7 +47,7 @@ import sys, glob # for listing serial ports
 try:
     import serial
 except ImportError:
-    tkMessageBox.showerror('Import error', 'Please install pyserial.')
+    tk.tkMessageBox.showerror('Import error', 'Please install pyserial.')
     raise
 
 connection = None
@@ -80,32 +81,32 @@ command = {"passive": "128",
            "reset"  : "7"}
     
 
-class TetheredDriveApp(Tk):
+class TetheredDriveApp(tk.Tk):
     keyPressed = {s:False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
     callbackKeyLastDriveCommand = ''
 
     def __init__(self):
-        Tk.__init__(self)
+        tk.Tk.__init__(self)
         self.title("iRobot Create 2 Tethered Drive")
-        self.option_add('*tearOff', FALSE)
+        self.option_add('*tearOff', tk.FALSE)
 
-        self.menubar = Menu()
+        self.menubar = tk.Menu()
         self.configure(menu=self.menubar)
 
-        createMenu = Menu(self.menubar, tearoff=False)
+        createMenu = tk.Menu(self.menubar, tearoff=False)
         self.menubar.add_cascade(label="Create", menu=createMenu)
 
         createMenu.add_command(label="Connect", command=self.onConnect)
         createMenu.add_command(label="Help", command=self.onHelp)
         createMenu.add_command(label="Quit", command=self.onQuit)
 
-        self.text = Text(self, height = TEXTHEIGHT, width = TEXTWIDTH, wrap = WORD)
-        self.scroll = Scrollbar(self, command=self.text.yview)
+        self.text = tk.Text(self, height = TEXTHEIGHT, width = TEXTWIDTH, wrap = tk.WORD)
+        self.scroll = tk.Scrollbar(self, command=self.text.yview)
         self.text.configure(yscrollcommand=self.scroll.set)
-        self.text.pack(side=LEFT, fill=BOTH, expand=True)
-        self.scroll.pack(side=RIGHT, fill=Y)
+        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.text.insert(END, helpText)
+        self.text.insert(tk.END, helpText)
 
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
@@ -127,17 +128,17 @@ class TetheredDriveApp(Tk):
             if connection is not None:
                 connection.write(command)
             else:
-                tkMessageBox.showerror('Not connected!', 'Not connected to a robot!')
+                tk.tkMessageBox.showerror('Not connected!', 'Not connected to a robot!')
                 print "Not connected."
         except serial.SerialException:
             print "Lost connection"
-            tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
+            tk.tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
             connection = None
 
         print ' '.join([ str(ord(c)) for c in command ])
-        self.text.insert(END, ' '.join([ str(ord(c)) for c in command ]))
-        self.text.insert(END, '\n')
-        self.text.see(END)
+        self.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
+        self.text.insert(tk.END, '\n')
+        self.text.see(tk.END)
 
     # getDecodedBytes returns a n-byte value decoded using a format string.
     # Whether it blocks is based on how the connection was set up.
@@ -148,7 +149,7 @@ class TetheredDriveApp(Tk):
             return struct.unpack(fmt, connection.read(n))[0]
         except serial.SerialException:
             print "Lost connection"
-            tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
+            tk.tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
             connection = None
             return None
         except struct.error:
@@ -236,31 +237,31 @@ class TetheredDriveApp(Tk):
         global connection
 
         if connection is not None:
-            tkMessageBox.showinfo('Oops', "You're already connected!")
+            tk.tkMessageBox.showinfo('Oops', "You're already connected!")
             return
 
         try:
             ports = self.getSerialPorts()
-            port = tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
+            port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
         except EnvironmentError:
-            port = tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
+            port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
 
         if port is not None:
             print "Trying " + str(port) + "... "
             try:
                 connection = serial.Serial(port, baudrate=115200, timeout=1)
                 print "Connected!"
-                tkMessageBox.showinfo('Connected', "Connection succeeded!")
+                tk.tkMessageBox.showinfo('Connected', "Connection succeeded!")
             except:
                 print "Failed."
-                tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
+                tk.tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
 
 
     def onHelp(self):
-        tkMessageBox.showinfo('Help', helpText)
+        tk.tkMessageBox.showinfo('Help', helpText)
 
     def onQuit(self):
-        if tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
+        if tk.tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
             self.destroy()
 
     def getSerialPorts(self):
