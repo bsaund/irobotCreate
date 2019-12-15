@@ -104,6 +104,7 @@ class TetheredDriveApp(Tk):
 
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
+        self.onLoad()
 
     # sendCommandASCII takes a string of whitespace-separated, ASCII-encoded base 10 values to send
     def sendCommandASCII(self, command):
@@ -230,6 +231,23 @@ class TetheredDriveApp(Tk):
             if cmd != self.callbackKeyLastDriveCommand:
                 self.sendCommandRaw(cmd)
                 self.callbackKeyLastDriveCommand = cmd
+
+    def onLoad(self):
+        global connection
+
+        try:
+            ports = self.getSerialPorts()
+        except EnvironmentError:
+            print "Failed to get serial ports"
+            
+        for port in ports:
+            if not port.startswith("/dev/ttyUSB"):
+                continue
+            try:
+                connection = serial.Serial(port, baudrate=115200, timeout=1)
+                print "Connected to", port
+            except:
+                print "Failed to connect to", port
 
     def onConnect(self):
         global connection
