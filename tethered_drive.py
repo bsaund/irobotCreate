@@ -40,6 +40,7 @@
 import Tkinter as tk
 import tkMessageBox
 import tkSimpleDialog
+import irobot_commands as ic
 
 import struct
 import sys, glob # for listing serial ports
@@ -49,8 +50,6 @@ try:
 except ImportError:
     tk.tkMessageBox.showerror('Import error', 'Please install pyserial.')
     raise
-
-connection = None
 
 TEXTWIDTH = 40 # window width, in characters
 TEXTHEIGHT = 48 # window height, in lines
@@ -78,7 +77,9 @@ command = {"passive": "128",
            "clean"  : "135",
            "dock"   : "143",
            "beep"   : "140 3 1 64 16 141 3",
-           "reset"  : "7"}
+           "reset"  : "7",
+           "song1"  : "141 0"
+}
 
 info_fields = ["battery",
                "something",
@@ -87,10 +88,6 @@ info_fields = ["battery",
 class StatusWindow(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
-        # self.text = tk.Text(self, height=TEXTHEIGHT, width=10, wrap = tk.WORD)
-        # self.text.pack(side=tk.LEFT)
-        # self.grid(column=0, row=0)
-
         self.fields = {}
         self.values = {}
 
@@ -111,7 +108,7 @@ class Console(tk.Frame):
 
         self.text.insert(tk.END, helpText)
 
-    
+        
 
 class TetheredDriveApp(tk.Tk):
     keyPressed = {s:False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
@@ -140,6 +137,8 @@ class TetheredDriveApp(tk.Tk):
 
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
+
+        self.robot = ic.Create()
         self.onLoad()
 
     # sendCommandASCII takes a string of whitespace-separated, ASCII-encoded base 10 values to send
@@ -152,11 +151,9 @@ class TetheredDriveApp(tk.Tk):
 
     # sendCommandRaw takes a string interpreted as a byte array
     def sendCommandRaw(self, command):
-        global connection
-
         try:
-            if connection is not None:
-                connection.write(command)
+            if self.robot.connection is not None:
+                self.robot.connection.write(command)
             else:
                 tk.tkMessageBox.showerror('Not connected!', 'Not connected to a robot!')
                 print "Not connected."
@@ -214,7 +211,8 @@ class TetheredDriveApp(tk.Tk):
                        "C"     : "clean",
                        "D"     : "dock",
                        "SPACE" : "beep",
-                       "R"     : "reset"
+                       "R"     : "reset",
+                       "1"     : "song1"
                        }
 
             if k in key_map:
@@ -222,6 +220,9 @@ class TetheredDriveApp(tk.Tk):
             elif k in self.keyPressed:
                 motionChange = True
                 self.keyPressed[k] = True
+            elif k == "Z":
+                # self.sendCommandASCII(ic.beep())
+                self.sendCommandASCII(ic.request([7]))
             else:
                 print repr(k), "not handled"
         elif event.type == '3': # KeyRelease; need to figure out how to get constant
@@ -247,7 +248,6 @@ class TetheredDriveApp(tk.Tk):
                 self.callbackKeyLastDriveCommand = cmd
 
     def onLoad(self):
-        global connection
 
         try:
             ports = self.getSerialPorts()
@@ -258,15 +258,13 @@ class TetheredDriveApp(tk.Tk):
             if not port.startswith("/dev/ttyUSB"):
                 continue
             try:
-                connection = serial.Serial(port, baudrate=115200, timeout=1)
+                self.robot.connect(port)
                 print "Connected to", port
             except:
                 print "Failed to connect to", port
 
     def onConnect(self):
-        global connection
-
-        if connection is not None:
+        if self.robot.connection is not None:
             tk.tkMessageBox.showinfo('Oops', "You're already connected!")
             return
 
@@ -279,7 +277,7 @@ class TetheredDriveApp(tk.Tk):
         if port is not None:
             print "Trying " + str(port) + "... "
             try:
-                connection = serial.Serial(port, baudrate=115200, timeout=1)
+                self.robot.connect(port)
                 print "Connected!"
                 tk.tkMessageBox.showinfo('Connected', "Connection succeeded!")
             except:
