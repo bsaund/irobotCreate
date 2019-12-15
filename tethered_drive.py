@@ -52,7 +52,7 @@ except ImportError:
 
 connection = None
 
-TEXTWIDTH = 80 # window width, in characters
+TEXTWIDTH = 40 # window width, in characters
 TEXTHEIGHT = 48 # window height, in lines
 
 VELOCITYCHANGE = 200
@@ -79,6 +79,38 @@ command = {"passive": "128",
            "dock"   : "143",
            "beep"   : "140 3 1 64 16 141 3",
            "reset"  : "7"}
+
+info_fields = ["battery",
+               "something",
+               "something else"]
+
+class StatusWindow(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        # self.text = tk.Text(self, height=TEXTHEIGHT, width=10, wrap = tk.WORD)
+        # self.text.pack(side=tk.LEFT)
+        # self.grid(column=0, row=0)
+
+        self.fields = {}
+        self.values = {}
+
+        for i in range(len(info_fields)):
+            f = info_fields[i]
+            self.fields[f] = tk.Label(self, text=f).grid(column=0, row=i, padx=20, stick=tk.W)
+            self.values[f] = tk.Label(self, text="0", width=12, anchor="w").grid(column=1, row=i, padx=20)
+        
+
+class Console(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.text = tk.Text(self, height = TEXTHEIGHT, width = TEXTWIDTH, wrap = tk.WORD)
+        self.scroll = tk.Scrollbar(self, command=self.text.yview)
+        self.text.configure(yscrollcommand=self.scroll.set)
+        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.text.insert(tk.END, helpText)
+
     
 
 class TetheredDriveApp(tk.Tk):
@@ -100,13 +132,11 @@ class TetheredDriveApp(tk.Tk):
         createMenu.add_command(label="Help", command=self.onHelp)
         createMenu.add_command(label="Quit", command=self.onQuit)
 
-        self.text = tk.Text(self, height = TEXTHEIGHT, width = TEXTWIDTH, wrap = tk.WORD)
-        self.scroll = tk.Scrollbar(self, command=self.text.yview)
-        self.text.configure(yscrollcommand=self.scroll.set)
-        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.console = Console(self)
+        self.console.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
 
-        self.text.insert(tk.END, helpText)
+        self.status_window = StatusWindow(self)
+        self.status_window.pack(side=tk.RIGHT)
 
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
@@ -136,9 +166,9 @@ class TetheredDriveApp(tk.Tk):
             connection = None
 
         print ' '.join([ str(ord(c)) for c in command ])
-        self.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
-        self.text.insert(tk.END, '\n')
-        self.text.see(tk.END)
+        self.console.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
+        self.console.text.insert(tk.END, '\n')
+        self.console.text.see(tk.END)
 
     # getDecodedBytes returns a n-byte value decoded using a format string.
     # Whether it blocks is based on how the connection was set up.
