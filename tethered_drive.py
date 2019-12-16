@@ -71,15 +71,6 @@ Arrows\tMotion
 If nothing happens after you connect, try pressing 'P' and then 'S' to get into safe mode.
 """
 
-command = {"passive": "128",
-           "safe"   : "131",
-           "full"   : "132",
-           "clean"  : "135",
-           "dock"   : "143",
-           "beep"   : "140 3 1 64 16 141 3",
-           "reset"  : "7",
-           "song1"  : "141 0"
-}
 
 info_fields = ["battery",
                "something",
@@ -139,65 +130,17 @@ class TetheredDriveApp(tk.Tk):
         self.bind("<KeyRelease>", self.callbackKey)
 
         self.robot = ic.Create()
+        self.robot.sendCommandCallback = self.sendCommandCallback
         self.onLoad()
 
-    # sendCommandASCII takes a string of whitespace-separated, ASCII-encoded base 10 values to send
-    def sendCommandASCII(self, command):
-        cmd = ""
-        for v in command.split():
-            cmd += chr(int(v))
 
-        self.sendCommandRaw(cmd)
-
-    # sendCommandRaw takes a string interpreted as a byte array
-    def sendCommandRaw(self, command):
-        try:
-            if self.robot.connection is not None:
-                self.robot.connection.write(command)
-            else:
-                tk.tkMessageBox.showerror('Not connected!', 'Not connected to a robot!')
-                print "Not connected."
-        except serial.SerialException:
-            print "Lost connection"
-            tk.tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
-            connection = None
-
+    def sendCommandCallback(self, command):
         print ' '.join([ str(ord(c)) for c in command ])
         self.console.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
         self.console.text.insert(tk.END, '\n')
         self.console.text.see(tk.END)
 
-    # getDecodedBytes returns a n-byte value decoded using a format string.
-    # Whether it blocks is based on how the connection was set up.
-    def getDecodedBytes(self, n, fmt):
-        global connection
-        
-        try:
-            return struct.unpack(fmt, connection.read(n))[0]
-        except serial.SerialException:
-            print "Lost connection"
-            tk.tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
-            connection = None
-            return None
-        except struct.error:
-            print "Got unexpected data from serial port."
-            return None
 
-    # get8Unsigned returns an 8-bit unsigned value.
-    def get8Unsigned(self):
-        return getDecodedBytes(1, "B")
-
-    # get8Signed returns an 8-bit signed value.
-    def get8Signed(self):
-        return getDecodedBytes(1, "b")
-
-    # get16Unsigned returns a 16-bit unsigned value.
-    def get16Unsigned(self):
-        return getDecodedBytes(2, ">H")
-
-    # get16Signed returns a 16-bit signed value.
-    def get16Signed(self):
-        return getDecodedBytes(2, ">h")
 
     # A handler for keyboard events. Feel free to add more!
     def callbackKey(self, event):
@@ -216,13 +159,13 @@ class TetheredDriveApp(tk.Tk):
                        }
 
             if k in key_map:
-                self.sendCommandASCII(command[key_map[k]])
+                self.robot.sendCommandASCII(ic.command_map[key_map[k]])
             elif k in self.keyPressed:
                 motionChange = True
                 self.keyPressed[k] = True
             elif k == "Z":
-                # self.sendCommandASCII(ic.beep())
-                self.sendCommandASCII(ic.request([7]))
+                # self.robot.sendCommandASCII(ic.beep())
+                self.robot.queryList([6, 17])
             else:
                 print repr(k), "not handled"
         elif event.type == '3': # KeyRelease; need to figure out how to get constant
@@ -244,7 +187,7 @@ class TetheredDriveApp(tk.Tk):
             # create drive command
             cmd = struct.pack(">Bhh", 145, vr, vl)
             if cmd != self.callbackKeyLastDriveCommand:
-                self.sendCommandRaw(cmd)
+                self.robot.sendCommandRaw(cmd)
                 self.callbackKeyLastDriveCommand = cmd
 
     def onLoad(self):
