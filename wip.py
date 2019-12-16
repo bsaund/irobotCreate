@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import serial
+import IPython
+from irobot.robots import create2
+from irobot.openinterface.constants import BAUD_RATE, DRIVE, RESPONSE_SIZES, ROBOT, MODES, POWER_SAVE_TIME
 
 
 def sendCommandRaw(command):
@@ -30,6 +32,8 @@ def onConnect():
 
 
 if __name__ == "__main__":
-    print("hello")
-    ser = serial.Serial('/dev/ttyUSB0')
-    print(ser.name)
+    # print("hello")
+    # ser = serial.Serial('/dev/ttyUSB0')
+    # print(ser.name)
+    rob = create2.Create2('/dev/ttyUSB0')
+    IPython.embed()

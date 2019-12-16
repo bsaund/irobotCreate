@@ -40,10 +40,13 @@
 import Tkinter as tk
 import tkMessageBox
 import tkSimpleDialog
-import irobot_commands as ic
+# import irobot_commands as ic
+from irobot.robots import create2
+from irobot.openinterface.constants import MODES
 
 import struct
 import sys, glob # for listing serial ports
+import label_mappings as lm
 
 try:
     import serial
@@ -72,8 +75,19 @@ If nothing happens after you connect, try pressing 'P' and then 'S' to get into 
 """
 
 
-info_fields = ["battery",
-               "something",
+info_fields = ["Mode",
+               "bump left",
+               "bump right",
+               "light bump left",
+               "light bump front left",
+               "light bump center left",
+               "light bump center right",
+               "light bump front right",
+               "light bump right",
+               "cliff left",
+               "cliff front left",
+               "cliff front right",
+               "cliff right",
                "something else"]
 
 class StatusWindow(tk.Frame):
@@ -84,9 +98,60 @@ class StatusWindow(tk.Frame):
 
         for i in range(len(info_fields)):
             f = info_fields[i]
-            self.fields[f] = tk.Label(self, text=f).grid(column=0, row=i, padx=20, stick=tk.W)
-            self.values[f] = tk.Label(self, text="0", width=12, anchor="w").grid(column=1, row=i, padx=20)
-        
+            self.fields[f] = tk.Label(self, text=f)
+            self.fields[f].grid(column=0, row=i, padx=20, stick=tk.W)
+            self.values[f] = tk.Label(self, text="0", width=12, anchor="w")
+            self.values[f].grid(column=1, row=i, padx=20)
+        self.i = 0
+
+    def set_label(self, name, text):
+        self.values[name].configure(text=text)
+
+    def refresh_labels(self, robot):
+
+        self.set_label("Mode", lm.modes[robot.oi_mode])
+        bumps = robot.bumps_and_wheel_drops
+        self.set_label("bump left", bumps.bump_left)
+        self.set_label("bump right", bumps.bump_right)
+        lt_bump = robot.light_bumper
+        self.set_label("light bump left", lt_bump.left)
+        self.set_label("light bump front left", lt_bump.front_left)
+        self.set_label("light bump center left", lt_bump.center_left)
+        self.set_label("light bump center right", lt_bump.center_right)
+        self.set_label("light bump front right", lt_bump.front_right)
+        self.set_label("light bump right", lt_bump.right)
+            
+        self.set_label("cliff left", robot.cliff_left)
+        self.set_label("cliff front left", robot.cliff_front_left)
+        self.set_label("cliff front right", robot.cliff_front_right)
+        self.set_label("cliff right", robot.cliff_right)
+
+
+    #         @property
+    # def bumps_and_wheel_drops(self):
+    #     return BumpsAndWheelDrop(self._read_sensor_data(7))
+
+    # @property
+    # def wall_sensor(self):
+    #     return binary_response(self._read_sensor_data(8))
+
+    # @property
+    # def cliff_left(self):
+    #     return binary_response(self._read_sensor_data(9))
+
+    # @property
+    # def cliff_front_left(self):
+    #     return binary_response(self._read_sensor_data(10))
+
+    # @property
+    # def cliff_front_right(self):
+    #     return binary_response(self._read_sensor_data(11))
+
+    # @property
+    # def cliff_right(self):
+    #     return binary_response(self._read_sensor_data(12))
+
+
 
 class Console(tk.Frame):
     def __init__(self, parent):
@@ -116,7 +181,7 @@ class TetheredDriveApp(tk.Tk):
         createMenu = tk.Menu(self.menubar, tearoff=False)
         self.menubar.add_cascade(label="Create", menu=createMenu)
 
-        createMenu.add_command(label="Connect", command=self.onConnect)
+        # createMenu.add_command(label="Connect", command=self.onConnect)
         createMenu.add_command(label="Help", command=self.onHelp)
         createMenu.add_command(label="Quit", command=self.onQuit)
 
@@ -129,11 +194,16 @@ class TetheredDriveApp(tk.Tk):
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
 
-        self.robot = ic.Create()
-        self.robot.sendCommandCallback = self.sendCommandCallback
-        self.onLoad()
+        # self.robot = ic.Create()
+        # self.robot.sendCommandCallback = self.sendCommandCallback
+        self.robot = create2.Create2("/dev/ttyUSB0")
+        self.refresh_labels()
+        # self.onLoad()
 
-
+    def refresh_labels(self):
+        self.status_window.refresh_labels(self.robot)
+        self.after(100, self.refresh_labels)
+        
     def sendCommandCallback(self, command):
         print ' '.join([ str(ord(c)) for c in command ])
         self.console.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
@@ -148,21 +218,24 @@ class TetheredDriveApp(tk.Tk):
         motionChange = False
 
         if event.type == '2': # KeyPress; need to figure out how to get constant
-            key_map = {"P"     : "passive",
-                       "S"     : "safe",
-                       "F"     : "full",
-                       "C"     : "clean",
-                       "D"     : "dock",
-                       "SPACE" : "beep",
-                       "R"     : "reset",
-                       "1"     : "song1"
-                       }
+            mode_map = {"P" : MODES.PASSIVE,
+                        "S" : MODES.SAFE,
+                        "F" : MODES.FULL}
+            action_map = {"C"     : "clean",
+                          "D"     : self.robot.seek_dock,
+                          "SPACE" : lambda: self.robot.play_song(3),
+                          "R"     : "reset",
+                          "1"     : "song1"
+            }
 
-            if k in key_map:
-                self.robot.sendCommandASCII(ic.command_map[key_map[k]])
+
+            if k in mode_map:
+                self.robot.oi_mode = mode_map[k]
             elif k in self.keyPressed:
                 motionChange = True
                 self.keyPressed[k] = True
+            elif k in action_map:
+                action_map[k]()
             elif k == "Z":
                 # self.robot.sendCommandASCII(ic.beep())
                 self.robot.queryList([6, 17])
@@ -184,48 +257,50 @@ class TetheredDriveApp(tk.Tk):
             vr = velocity + (rotation/2)
             vl = velocity - (rotation/2)
 
-            # create drive command
-            cmd = struct.pack(">Bhh", 145, vr, vl)
-            if cmd != self.callbackKeyLastDriveCommand:
-                self.robot.sendCommandRaw(cmd)
-                self.callbackKeyLastDriveCommand = cmd
+            self.robot.drive_direct(vr, vl)
 
-    def onLoad(self):
+            # # create drive command
+            # cmd = struct.pack(">Bhh", 145, vr, vl)
+            # if cmd != self.callbackKeyLastDriveCommand:
+            #     self.robot.sendCommandRaw(cmd)
+            #     self.callbackKeyLastDriveCommand = cmd
 
-        try:
-            ports = self.getSerialPorts()
-        except EnvironmentError:
-            print "Failed to get serial ports"
+    # def onLoad(self):
+
+    #     try:
+    #         ports = self.getSerialPorts()
+    #     except EnvironmentError:
+    #         print "Failed to get serial ports"
             
-        for port in ports:
-            if not port.startswith("/dev/ttyUSB"):
-                continue
-            try:
-                self.robot.connect(port)
-                print "Connected to", port
-            except:
-                print "Failed to connect to", port
+    #     for port in ports:
+    #         if not port.startswith("/dev/ttyUSB"):
+    #             continue
+    #         try:
+    #             self.robot.connect(port)
+    #             print "Connected to", port
+    #         except:
+    #             print "Failed to connect to", port
 
-    def onConnect(self):
-        if self.robot.connection is not None:
-            tk.tkMessageBox.showinfo('Oops', "You're already connected!")
-            return
+    # def onConnect(self):
+    #     if self.robot.connection is not None:
+    #         tk.tkMessageBox.showinfo('Oops', "You're already connected!")
+    #         return
 
-        try:
-            ports = self.getSerialPorts()
-            port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
-        except EnvironmentError:
-            port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
+    #     try:
+    #         ports = self.getSerialPorts()
+    #         port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
+    #     except EnvironmentError:
+    #         port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
 
-        if port is not None:
-            print "Trying " + str(port) + "... "
-            try:
-                self.robot.connect(port)
-                print "Connected!"
-                tk.tkMessageBox.showinfo('Connected', "Connection succeeded!")
-            except:
-                print "Failed."
-                tk.tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
+    #     if port is not None:
+    #         print "Trying " + str(port) + "... "
+    #         try:
+    #             self.robot.connect(port)
+    #             print "Connected!"
+    #             tk.tkMessageBox.showinfo('Connected', "Connection succeeded!")
+    #         except:
+    #             print "Failed."
+    #             tk.tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
 
 
     def onHelp(self):
