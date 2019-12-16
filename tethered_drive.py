@@ -88,7 +88,8 @@ info_fields = ["Mode",
                "cliff front left",
                "cliff front right",
                "cliff right",
-               "something else"]
+               "charging state",
+               "battery charge"]
 
 class StatusWindow(tk.Frame):
     def __init__(self, parent):
@@ -100,7 +101,7 @@ class StatusWindow(tk.Frame):
             f = info_fields[i]
             self.fields[f] = tk.Label(self, text=f)
             self.fields[f].grid(column=0, row=i, padx=20, stick=tk.W)
-            self.values[f] = tk.Label(self, text="0", width=12, anchor="w")
+            self.values[f] = tk.Label(self, text="0", width=20, anchor="w")
             self.values[f].grid(column=1, row=i, padx=20)
         self.i = 0
 
@@ -108,7 +109,13 @@ class StatusWindow(tk.Frame):
         self.values[name].configure(text=text)
 
     def refresh_labels(self, robot):
+        try:
+            self._refresh_labels(robot)
+        except KeyError as e:
+            print "Key error. Probably bad serial data"
+            print e.message
 
+    def _refresh_labels(self, robot):
         self.set_label("Mode", lm.modes[robot.oi_mode])
         bumps = robot.bumps_and_wheel_drops
         self.set_label("bump left", bumps.bump_left)
@@ -125,31 +132,9 @@ class StatusWindow(tk.Frame):
         self.set_label("cliff front left", robot.cliff_front_left)
         self.set_label("cliff front right", robot.cliff_front_right)
         self.set_label("cliff right", robot.cliff_right)
-
-
-    #         @property
-    # def bumps_and_wheel_drops(self):
-    #     return BumpsAndWheelDrop(self._read_sensor_data(7))
-
-    # @property
-    # def wall_sensor(self):
-    #     return binary_response(self._read_sensor_data(8))
-
-    # @property
-    # def cliff_left(self):
-    #     return binary_response(self._read_sensor_data(9))
-
-    # @property
-    # def cliff_front_left(self):
-    #     return binary_response(self._read_sensor_data(10))
-
-    # @property
-    # def cliff_front_right(self):
-    #     return binary_response(self._read_sensor_data(11))
-
-    # @property
-    # def cliff_right(self):
-    #     return binary_response(self._read_sensor_data(12))
+        self.set_label("charging state", lm.battery[robot.charging_state])
+        
+        self.set_label("battery charge", "%i / %i (mAh)" % (robot.battery_charge, robot.battery_capacity))
 
 
 
