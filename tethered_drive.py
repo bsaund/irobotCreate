@@ -191,22 +191,13 @@ class TetheredDriveApp(tk.Tk):
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
 
-        # self.robot = ic.Create()
-        # self.robot.sendCommandCallback = self.sendCommandCallback
-        # self.robot = create2.Create2("/dev/ttyUSB0")
         self.robot = Bradbot("/dev/ttyUSB0")
-        # IPython.embed()
-        # snr = self.robot.sensor_group100
-        # self.cartesian = cartesian.Cartesian(snr.left_encoder_counts, snr.right_encoder_counts)
-        self.refresh_labels()
-        # self.onLoad()
+        self.main_loop()
 
-    def refresh_labels(self):
-        self.robot.update_from_sensors()
-        # snr = self.robot.sensor_group100
-        # self.cartesian.update(snr.left_encoder_counts, snr.right_encoder_counts)
+    def main_loop(self):
+        self.robot.control_loop()
         self.status_window.refresh_labels(self.robot)
-        self.after(100, self.refresh_labels)
+        self.after(100, self.main_loop)
         
     def sendCommandCallback(self, command):
         print ' '.join([ str(ord(c)) for c in command ])
@@ -228,7 +219,7 @@ class TetheredDriveApp(tk.Tk):
             action_map = {"C"     : "clean",
                           "D"     : self.robot.seek_dock,
                           "SPACE" : lambda: self.robot.play_song(3),
-                          "R"     : "reset",
+                          "R"     : lambda: self.robot.go_to(0.3, 0),
                           "1"     : "song1"
             }
 

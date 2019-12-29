@@ -29,12 +29,12 @@ class Cartesian:
 
 
         d_forward = (d_left + d_right)/ (2*TICKS_PER_METER)
-        d_theta = (d_right - d_left) / (2*TICKS_PER_RAD)
+        d_theta = (d_left - d_right) / (2*TICKS_PER_RAD)
 
         self.theta += d_theta
 
         self.x += d_forward * np.cos(self.theta)
-        self.y += d_forward * np.sin(self.theta)
+        self.y -= d_forward * np.sin(self.theta)
 
         
 
