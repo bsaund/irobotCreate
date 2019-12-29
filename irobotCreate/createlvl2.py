@@ -114,3 +114,24 @@ class Bradbot(create2.Create2):
         vl *= scale
 
         return vr, vl
+
+    def set_katie_song(self):
+        q = 36 # quarter note
+        e = q/2 # eigth note
+        notes = [[69, q],
+                 [74, q],
+                 [74, e],
+                 [76, e],
+                 [77, e],
+                 [74, e],
+                 [1, e],
+                 [74, e],
+                 [73, e],
+                 [76, e],
+                 [1, e],
+                 [76, e],
+                 [77, e],
+                 [74, e]
+        ]
+        self.set_song(0, notes)
+        self.play_song(0)

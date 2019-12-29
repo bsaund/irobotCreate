@@ -220,7 +220,7 @@ class TetheredDriveApp(tk.Tk):
                           "D"     : self.robot.seek_dock,
                           "SPACE" : lambda: self.robot.play_song(3),
                           "R"     : lambda: self.robot.go_to(0.3, 0),
-                          "1"     : "song1"
+                          "1"     : self.robot.set_katie_song
             }
 
 
