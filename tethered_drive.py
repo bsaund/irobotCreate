@@ -42,11 +42,14 @@ import tkMessageBox
 import tkSimpleDialog
 # import irobot_commands as ic
 from irobot.robots import create2
+from irobotCreate.createlvl2 import Bradbot
 from irobot.openinterface.constants import MODES
 
 import struct
 import sys, glob # for listing serial ports
 import label_mappings as lm
+
+import IPython
 
 try:
     import serial
@@ -89,7 +92,10 @@ info_fields = ["Mode",
                "cliff front right",
                "cliff right",
                "charging state",
-               "battery charge"]
+               "battery charge",
+               "encoder",
+               "statis",
+               "pos"]
 
 class StatusWindow(tk.Frame):
     def __init__(self, parent):
@@ -116,11 +122,13 @@ class StatusWindow(tk.Frame):
             print e.message
 
     def _refresh_labels(self, robot):
-        self.set_label("Mode", lm.modes[robot.oi_mode])
-        bumps = robot.bumps_and_wheel_drops
+        all_sensors = robot.irobot_data
+        
+        self.set_label("Mode", lm.modes[all_sensors.oi_mode])
+        bumps = all_sensors.bumps_and_wheel_drops
         self.set_label("bump left", bumps.bump_left)
         self.set_label("bump right", bumps.bump_right)
-        lt_bump = robot.light_bumper
+        lt_bump = all_sensors.light_bumper
         self.set_label("light bump left", lt_bump.left)
         self.set_label("light bump front left", lt_bump.front_left)
         self.set_label("light bump center left", lt_bump.center_left)
@@ -128,13 +136,17 @@ class StatusWindow(tk.Frame):
         self.set_label("light bump front right", lt_bump.front_right)
         self.set_label("light bump right", lt_bump.right)
             
-        self.set_label("cliff left", robot.cliff_left)
-        self.set_label("cliff front left", robot.cliff_front_left)
-        self.set_label("cliff front right", robot.cliff_front_right)
-        self.set_label("cliff right", robot.cliff_right)
-        self.set_label("charging state", lm.battery[robot.charging_state])
+        self.set_label("cliff left", all_sensors.cliff_left_sensor)
+        self.set_label("cliff front left", all_sensors.cliff_front_left_sensor)
+        self.set_label("cliff front right", all_sensors.cliff_front_right_sensor)
+        self.set_label("cliff right", all_sensors.cliff_right_sensor)
+        self.set_label("charging state", lm.battery[all_sensors.charging_state])
         
-        self.set_label("battery charge", "%i / %i (mAh)" % (robot.battery_charge, robot.battery_capacity))
+        self.set_label("battery charge", "%i / %i (mAh)" % (all_sensors.battery_charge, all_sensors.battery_capacity))
+
+        self.set_label("encoder", "%i, %i" %(all_sensors.left_encoder_counts, all_sensors.right_encoder_counts))
+        self.set_label("statis", all_sensors.stasis.toggling)
+        self.set_label("pos", "%.2f, %.2f, %.1f" % (robot.pos.x, robot.pos.y, robot.pos.theta))
 
 
 
@@ -181,11 +193,18 @@ class TetheredDriveApp(tk.Tk):
 
         # self.robot = ic.Create()
         # self.robot.sendCommandCallback = self.sendCommandCallback
-        self.robot = create2.Create2("/dev/ttyUSB0")
+        # self.robot = create2.Create2("/dev/ttyUSB0")
+        self.robot = Bradbot("/dev/ttyUSB0")
+        # IPython.embed()
+        # snr = self.robot.sensor_group100
+        # self.cartesian = cartesian.Cartesian(snr.left_encoder_counts, snr.right_encoder_counts)
         self.refresh_labels()
         # self.onLoad()
 
     def refresh_labels(self):
+        self.robot.update_from_sensors()
+        # snr = self.robot.sensor_group100
+        # self.cartesian.update(snr.left_encoder_counts, snr.right_encoder_counts)
         self.status_window.refresh_labels(self.robot)
         self.after(100, self.refresh_labels)
         
