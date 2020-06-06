@@ -71,7 +71,7 @@ class Bradbot(create2.Create2):
     Commands the robot to move to the target, returning true if reached within error limit.
     Blocks
     """
-    def go_to(self, x_target, y_target, vel=200, err_limit = 0.05):
+    def go_to(self, x_target, y_target, vel=400, err_limit = 0.05):
         self.moving = True
         self.x_target = x_target
         self.y_target = y_target
@@ -118,7 +118,9 @@ class Bradbot(create2.Create2):
     def set_katie_song(self):
         q = 36 # quarter note
         e = q/2 # eigth note
-        notes = [[69, q],
+        
+        notes = [[69, q-4],
+                 [1, 4],
                  [74, q],
                  [74, e],
                  [76, e],
