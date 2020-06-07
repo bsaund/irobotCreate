@@ -39,19 +39,14 @@ from __future__ import print_function
 
 import Tkinter as tk
 import tkMessageBox
-import tkSimpleDialog
-from irobot.robots import create2
 from irobotCreate.createlvl2 import Bradbot
 from irobot.openinterface.constants import MODES
-
-import struct
-import sys, glob  # for listing serial ports
 import label_mappings as lm
 
 try:
     import serial
 except ImportError:
-    tk.tkMessageBox.showerror('Import error', 'Please install pyserial.')
+    tkMessageBox.showerror('Import error', 'Please install pyserial.')
     raise
 
 TEXT_WIDTH = 40  # window width, in characters
@@ -168,15 +163,15 @@ class TetheredDriveApp(tk.Tk):
         self.title("iRobot Create 2 Tethered Drive")
         self.option_add('*tearOff', tk.FALSE)
 
-        self.menubar = tk.Menu()
-        self.configure(menu=self.menubar)
+        self.menu_bar = tk.Menu()
+        self.configure(menu=self.menu_bar)
 
-        createMenu = tk.Menu(self.menubar, tearoff=False)
-        self.menubar.add_cascade(label="Create", menu=createMenu)
+        create_menu = tk.Menu(self.menu_bar, tearoff=False)
+        self.menu_bar.add_cascade(label="Create", menu=create_menu)
 
         # createMenu.add_command(label="Connect", command=self.onConnect)
-        createMenu.add_command(label="Help", command=self.onHelp)
-        createMenu.add_command(label="Quit", command=self.onQuit)
+        create_menu.add_command(label="Help", command=self.onHelp)
+        create_menu.add_command(label="Quit", command=self.onQuit)
 
         self.console = Console(self)
         self.console.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
@@ -224,9 +219,6 @@ class TetheredDriveApp(tk.Tk):
             self.send_new_motion()
         elif k in action_map:
             action_map[k]()
-        elif k == "Z":
-            # self.robot.sendCommandASCII(ic.beep())
-            self.robot.queryList([6, 17])
         else:
             print(repr(k), "not handled")
 
@@ -251,12 +243,11 @@ class TetheredDriveApp(tk.Tk):
 
         self.robot.drive_direct(vr, vl)
 
-
     def onHelp(self):
-        tk.tkMessageBox.showinfo('Help', helpText)
+        tkMessageBox.showinfo('Help', helpText)
 
     def onQuit(self):
-        if tk.tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
+        if tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
             self.destroy()
 
 
