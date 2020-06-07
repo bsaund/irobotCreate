@@ -10,13 +10,14 @@ MSG_SIZE = 1024
 class RemoteSerialServer:
     def __init__(self, address=('', PORT), max_clients=1):
         self.s = socket.socket()
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.s.bind(address)
         self.s.listen(max_clients)
         self.client = None
         self.address = None
         self.serial_port = None
-        baud_rate=115200
-        timeout=1
+        baud_rate = 115200
+        timeout = 1
         self.serial_port = serial.Serial(port="/dev/ttyUSB0",
                                          baudrate=baud_rate,
                                          bytesize=serial.EIGHTBITS,
@@ -62,6 +63,8 @@ class RemoteSerialServer:
         elif action == "flush":
             self.serial_port.flushInput()
             return (True,)
+        elif action == "in_waiting":
+            return True, self.serial_port.in_waiting
         else:
             print("Unknown action: {}".format(action))
 
@@ -90,13 +93,20 @@ class RemoteSerialClient:
     def clear(self):
         self.send("clear")
 
-    def flush(self):
+    def flushInput(self):
         response = self.send("flush")
         if not response[0]:
             raise Exception("Error when flushing")
 
     def close(self):
         pass
+
+    @property
+    def in_waiting(self):
+        response = self.send("in_waiting")
+        if not response[0]:
+            raise Exception("Error when running in_waiting")
+        return response[1]
 
 
 if __name__ == "__main__":
