@@ -12,7 +12,7 @@ class Server:
     def WaitForConnection(self):
         print("Waiting for connection")
         self.client, self.address = (self.s.accept())
-        print('Got a connection from: ' + str(self.client) + '.')
+        print('Got a connection from: {}.'.format(self.address))
 
     def receive(self):
         print("Waiting for data")
@@ -24,4 +24,4 @@ class Server:
 
 s = Server()
 s.WaitForConnection()
-# s.receive()
+s.receive()

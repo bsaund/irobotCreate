@@ -12,6 +12,7 @@ class Client:
         print(self.s.recv(1024))
 
 
+# c = Client(address=("127.0.0.1", 5001))
 c = Client()
 c.send()
 time.sleep(1)
