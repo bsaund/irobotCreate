@@ -43,9 +43,9 @@ class RemoteSerialServer:
                 continue
 
             action, data = pickle.loads(raw_data)
-            print("action {}: data {}".format(action, data))
+            # print("action {}: data {}".format(action, data))
             response = self.handle_action(action, data)
-            print(response)
+            # print(response)
             self.client.sendall(pickle.dumps(response))
 
     def handle_action(self, action, data):
