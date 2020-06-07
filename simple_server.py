@@ -7,12 +7,18 @@ class Server:
         self.s.bind(address)
         self.s.listen(max_clients)
         self.client = None
-        self.address=None
+        self.address = None
 
     def WaitForConnection(self):
         self.client, self.address = (self.s.accept())
         print('Got a connection from: ' + str(self.client) + '.')
 
+    def receive(self):
+        for i in range(10):
+            data = self.s.recv(1024)
+            print(data)
+
 
 s = Server()
 s.WaitForConnection()
+s.receive()

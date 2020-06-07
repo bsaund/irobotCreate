@@ -6,5 +6,8 @@ class Client:
         self.s = socket.socket()
         self.s.connect(address)
 
+    def send(self):
+        self.s.send('hello world')
+
 
 c = Client()
