@@ -2,7 +2,6 @@ import socket
 import pickle
 import serial
 import argparse
-from irobot.console_interfaces import utils
 
 PORT = 8000
 MSG_SIZE = 1024
