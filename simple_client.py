@@ -1,4 +1,5 @@
-import socket
+import socket, time
+import pickle
 
 
 class Client:
@@ -7,7 +8,11 @@ class Client:
         self.s.connect(address)
 
     def send(self):
-        self.s.send('hello world')
+        self.s.sendall(pickle.dumps(("this", "is", "python")))
+        print(self.s.recv(1024))
 
 
 c = Client()
+c.send()
+time.sleep(1)
+c.send()
