@@ -18,6 +18,7 @@ class Server:
         print("Waiting for data")
         for i in range(10):
             data = self.s.recv(1024)
+            print(data)
             self.client.sendall("I got your message")
             print(data)
 
