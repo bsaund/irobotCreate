@@ -5,15 +5,18 @@ from time import sleep, time
 import logging
 import serial
 from six import raise_from, iterbytes
+from irobot.console_interfaces import remote_serial
 
-from irobot.openinterface.commands import set_mode_full, set_mode_passive, set_mode_safe, power_down, reset, start, stop, \
+from irobot.openinterface.commands import set_mode_full, set_mode_passive, set_mode_safe, power_down, reset, start, \
+    stop, \
     drive, drive_direct, drive_pwm, seek_dock, set_baud, set_day_time, set_schedule, clean, clean_max, clean_spot, \
     set_motors, set_motors_pwm, set_leds, set_ascii_leds, trigger_buttons, set_song, play_song, request_sensor_data, \
     set_scheduling_leds, set_raw_leds
 from irobot.openinterface.constants import BAUD_RATE, DRIVE, RESPONSE_SIZES, ROBOT, MODES, POWER_SAVE_TIME
 from serial.serialutil import SerialException
 
-from irobot.openinterface.response_parsers import binary_response, byte_response, unsigned_byte_response, short_response, \
+from irobot.openinterface.response_parsers import binary_response, byte_response, unsigned_byte_response, \
+    short_response, \
     unsigned_short_response, BumpsAndWheelDrop, WheelOvercurrents, Buttons, ChargingSources, LightBumper, Stasis, \
     SensorGroup0, SensorGroup1, SensorGroup2, SensorGroup3, SensorGroup4, SensorGroup5, SensorGroup6, SensorGroup100, \
     SensorGroup101, SensorGroup106, SensorGroup107
@@ -21,9 +24,8 @@ from irobot.openinterface.response_parsers import binary_response, byte_response
 _error_msg_range = 'Argument {0} out of range'
 
 
-
 class Create2(object):
-    def __init__(self, port, baud_rate=115200, timeout=1, auto_wake=True, enable_quirks=True):
+    def __init__(self, port, baud_rate=115200, timeout=1, auto_wake=True, enable_quirks=True, remote=False):
         self._auto_wake = auto_wake
         self._oi_mode = MODES.OFF
         self._last_command_time = time()
@@ -33,11 +35,18 @@ class Create2(object):
 
         self.logger = logging.getLogger('Create2')
 
-        self._attach_to_robot(port, baud_rate, timeout)
+        if remote:
+            self._attach_to_remote_server()
+        else:
+            self._attach_to_robot(port, baud_rate, timeout)
 
     def __del__(self):
         self.stop()
         self._serial_port.close()
+
+    def _attach_to_remote_server(self):
+        self._serial_port = remote_serial.RemoteSerialClient()
+        self.start()
 
     def _attach_to_robot(self, port, baud_rate, timeout):
         try:
@@ -261,7 +270,7 @@ class Create2(object):
     def drive(self, velocity, radius):
         if not -500 <= velocity <= 500:
             raise ValueError(_error_msg_range.format('velocity'))
-        if not -2000 <= radius <= 2000 and\
+        if not -2000 <= radius <= 2000 and \
                 (radius != DRIVE.STRAIGHT and radius != DRIVE.STRAIGHT_ALT
                  and radius != DRIVE.TURN_IN_PLACE_CCW and radius != DRIVE.TURN_IN_PLACE_CW):
             raise ValueError(_error_msg_range.format('radius'))
@@ -328,7 +337,8 @@ class Create2(object):
     def set_ascii_leds(self, char1=32, char2=32, char3=32, char4=32):
         self._send(set_ascii_leds(char1, char2, char3, char4))
 
-    def trigger_buttons(self, clean=False, spot=False, dock=False, minute=False, hour=False, day=False, schedule=False, clock=False):
+    def trigger_buttons(self, clean=False, spot=False, dock=False, minute=False, hour=False, day=False, schedule=False,
+                        clock=False):
         self._send(trigger_buttons(clean, spot, dock, minute, hour, day, schedule, clock))
 
     def set_song(self, song_number, notes):
@@ -658,4 +668,3 @@ class RobotConnectionError(Exception):
 
     def __str__(self):
         return 'Failed to connect to robot on Port {} with Baud Code: {!r}'.format(self.port, self.baud)
-

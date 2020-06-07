@@ -3,7 +3,7 @@ import pickle
 
 
 class Server:
-    def __init__(self, address=('', 5000), max_clients=1):
+    def __init__(self, address=('', 8000), max_clients=1):
         self.s = socket.socket()
         self.s.bind(address)
         self.s.listen(max_clients)
@@ -17,7 +17,10 @@ class Server:
     def receive(self):
         print("Waiting for message")
         for i in range(10):
-            data = pickle.loads(self.client.recv(1024))
+            data = self.client.recv(1024)
+            if not data:
+                continue
+            data  = pickle.loads(data)
             self.client.sendall("I got your message")
             print(data)
 

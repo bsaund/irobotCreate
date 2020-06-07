@@ -9,12 +9,12 @@ class Client:
 
     def send(self):
         # self.s.sendall(pickle.dumps(("this", "is", "python")))
-        self.s.send("hello world")
+        self.s.send(pickle.dumps("hello world"))
         print(self.s.recv(1024))
 
 
-# c = Client(address=("127.0.0.1", 5001))
-c = Client()
+c = Client(address=("127.0.0.1", 8000))
+# c = Client()
 c.send()
 time.sleep(1)
 c.send()

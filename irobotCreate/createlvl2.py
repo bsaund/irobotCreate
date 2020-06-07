@@ -10,8 +10,8 @@ import time
 
 
 class Bradbot(create2.Create2):
-    def __init__(self, serial):
-        super(Bradbot, self).__init__(serial)
+    def __init__(self, serial=None, remote=False):
+        super(Bradbot, self).__init__(serial, remote=remote)
         
         self.irobot_data = None
         self.read_irobot_data()

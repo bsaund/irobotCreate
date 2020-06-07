@@ -186,7 +186,7 @@ class TetheredDriveApp(tk.Tk):
         self.bind("<Key>", self.callbackKey)
         self.bind("<KeyRelease>", self.callbackKey)
 
-        self.robot = Bradbot("/dev/ttyUSB0")
+        self.robot = Bradbot("/dev/ttyUSB0", remote=True)
         self.main_loop()
 
     def main_loop(self):
@@ -293,39 +293,6 @@ class TetheredDriveApp(tk.Tk):
     def onQuit(self):
         if tk.tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
             self.destroy()
-
-    def getSerialPorts(self):
-        """Lists serial ports
-        From http://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
-
-        :raises EnvironmentError:
-            On unsupported or unknown platforms
-        :returns:
-            A list of available serial ports
-        """
-        if sys.platform.startswith('win'):
-            ports = ['COM' + str(i + 1) for i in range(256)]
-
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            # this is to exclude your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-
-        else:
-            raise EnvironmentError('Unsupported platform')
-
-        result = []
-        for port in ports:
-
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException):
-                pass
-        return result
 
 
 if __name__ == "__main__":
