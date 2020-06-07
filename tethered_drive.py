@@ -116,7 +116,7 @@ class StatusWindow(tk.Frame):
             self._refresh_labels(robot)
         except KeyError as e:
             print("Key error. Probably bad serial data")
-            print(e.message)
+            print("Error message: {}".format(e.message))
 
     def _refresh_labels(self, robot):
         all_sensors = robot.irobot_data
@@ -142,7 +142,7 @@ class StatusWindow(tk.Frame):
         self.set_label("battery charge", "%i / %i (mAh)" % (all_sensors.battery_charge, all_sensors.battery_capacity))
 
         self.set_label("encoder", "%i, %i" % (all_sensors.left_encoder_counts, all_sensors.right_encoder_counts))
-        self.set_label("statis", all_sensors.stasis.toggling)
+        self.set_label("status", all_sensors.stasis.toggling)
         self.set_label("pos", "%.2f, %.2f, %.1f" % (robot.pos.x, robot.pos.y, robot.pos.theta))
 
 

@@ -4,7 +4,7 @@ import serial
 import argparse
 
 PORT = 8000
-MSG_SIZE = 1024
+MSG_SIZE = 2048
 
 
 class RemoteSerialServer:
