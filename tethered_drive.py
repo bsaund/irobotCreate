@@ -35,21 +35,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###########################################################################
+from __future__ import print_function
 
-# from Tkinter import *
 import Tkinter as tk
 import tkMessageBox
 import tkSimpleDialog
-# import irobot_commands as ic
 from irobot.robots import create2
 from irobotCreate.createlvl2 import Bradbot
 from irobot.openinterface.constants import MODES
 
 import struct
-import sys, glob # for listing serial ports
+import sys, glob  # for listing serial ports
 import label_mappings as lm
-
-import IPython
 
 try:
     import serial
@@ -57,13 +54,13 @@ except ImportError:
     tk.tkMessageBox.showerror('Import error', 'Please install pyserial.')
     raise
 
-TEXTWIDTH = 40 # window width, in characters
-TEXTHEIGHT = 48 # window height, in lines
+TEXT_WIDTH = 40  # window width, in characters
+TEXT_HEIGHT = 48  # window height, in lines
 
-VELOCITYCHANGE = 200
-ROTATIONCHANGE = 300
+VELOCITY_CHANGE = 200
+ROTATION_CHANGE = 300
 
-helpText = """\
+helpText = """
 Supported Keys:
 P\tPassive
 S\tSafe
@@ -76,7 +73,6 @@ Arrows\tMotion
 
 If nothing happens after you connect, try pressing 'P' and then 'S' to get into safe mode.
 """
-
 
 info_fields = ["Mode",
                "bump left",
@@ -94,8 +90,9 @@ info_fields = ["Mode",
                "charging state",
                "battery charge",
                "encoder",
-               "statis",
+               "status",
                "pos"]
+
 
 class StatusWindow(tk.Frame):
     def __init__(self, parent):
@@ -118,12 +115,12 @@ class StatusWindow(tk.Frame):
         try:
             self._refresh_labels(robot)
         except KeyError as e:
-            print "Key error. Probably bad serial data"
-            print e.message
+            print("Key error. Probably bad serial data")
+            print(e.message)
 
     def _refresh_labels(self, robot):
         all_sensors = robot.irobot_data
-        
+
         self.set_label("Mode", lm.modes[all_sensors.oi_mode])
         bumps = all_sensors.bumps_and_wheel_drops
         self.set_label("bump left", bumps.bump_left)
@@ -135,25 +132,24 @@ class StatusWindow(tk.Frame):
         self.set_label("light bump center right", lt_bump.center_right)
         self.set_label("light bump front right", lt_bump.front_right)
         self.set_label("light bump right", lt_bump.right)
-            
+
         self.set_label("cliff left", all_sensors.cliff_left_sensor)
         self.set_label("cliff front left", all_sensors.cliff_front_left_sensor)
         self.set_label("cliff front right", all_sensors.cliff_front_right_sensor)
         self.set_label("cliff right", all_sensors.cliff_right_sensor)
         self.set_label("charging state", lm.battery[all_sensors.charging_state])
-        
+
         self.set_label("battery charge", "%i / %i (mAh)" % (all_sensors.battery_charge, all_sensors.battery_capacity))
 
-        self.set_label("encoder", "%i, %i" %(all_sensors.left_encoder_counts, all_sensors.right_encoder_counts))
+        self.set_label("encoder", "%i, %i" % (all_sensors.left_encoder_counts, all_sensors.right_encoder_counts))
         self.set_label("statis", all_sensors.stasis.toggling)
         self.set_label("pos", "%.2f, %.2f, %.1f" % (robot.pos.x, robot.pos.y, robot.pos.theta))
-
 
 
 class Console(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
-        self.text = tk.Text(self, height = TEXTHEIGHT, width = TEXTWIDTH, wrap = tk.WORD)
+        self.text = tk.Text(self, height=TEXT_HEIGHT, width=TEXT_WIDTH, wrap=tk.WORD)
         self.scroll = tk.Scrollbar(self, command=self.text.yview)
         self.text.configure(yscrollcommand=self.scroll.set)
         self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -161,10 +157,9 @@ class Console(tk.Frame):
 
         self.text.insert(tk.END, helpText)
 
-        
 
 class TetheredDriveApp(tk.Tk):
-    keyPressed = {s:False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
+    keyPressed = {s: False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
     callbackKeyLastDriveCommand = ''
 
     def __init__(self):
@@ -198,36 +193,32 @@ class TetheredDriveApp(tk.Tk):
         self.robot.control_loop()
         self.status_window.refresh_labels(self.robot)
         self.after(100, self.main_loop)
-        
+
     def sendCommandCallback(self, command):
-        print ' '.join([ str(ord(c)) for c in command ])
-        self.console.text.insert(tk.END, ' '.join([ str(ord(c)) for c in command ]))
+        print(' '.join([str(ord(c)) for c in command]))
+        self.console.text.insert(tk.END, ' '.join([str(ord(c)) for c in command]))
         self.console.text.insert(tk.END, '\n')
         self.console.text.see(tk.END)
 
-
-
-    # A handler for keyboard events. Feel free to add more!
     def callbackKey(self, event):
         k = event.keysym.upper()
-        motionChange = False
+        motion_change = False
 
-        if event.type == '2': # KeyPress; need to figure out how to get constant
-            mode_map = {"P" : MODES.PASSIVE,
-                        "S" : MODES.SAFE,
-                        "F" : MODES.FULL}
-            action_map = {"C"     : "clean",
-                          "D"     : self.robot.seek_dock,
-                          "SPACE" : lambda: self.robot.play_song(3),
-                          "R"     : lambda: self.robot.go_to(0.3, 0),
-                          "1"     : self.robot.set_katie_song
-            }
-
+        if event.type == '2':  # KeyPress; need to figure out how to get constant
+            mode_map = {"P": MODES.PASSIVE,
+                        "S": MODES.SAFE,
+                        "F": MODES.FULL}
+            action_map = {"C": "clean",
+                          "D": self.robot.seek_dock,
+                          "SPACE": lambda: self.robot.play_song(3),
+                          "R": lambda: self.robot.go_to(0.3, 0),
+                          "1": self.robot.set_katie_song
+                          }
 
             if k in mode_map:
                 self.robot.oi_mode = mode_map[k]
             elif k in self.keyPressed:
-                motionChange = True
+                motion_change = True
                 self.keyPressed[k] = True
             elif k in action_map:
                 action_map[k]()
@@ -235,22 +226,21 @@ class TetheredDriveApp(tk.Tk):
                 # self.robot.sendCommandASCII(ic.beep())
                 self.robot.queryList([6, 17])
             else:
-                print repr(k), "not handled"
-        elif event.type == '3': # KeyRelease; need to figure out how to get constant
+                print(repr(k), "not handled")
+        elif event.type == '3':  # KeyRelease; need to figure out how to get constant
             # print k, "released"
 
-            
             if k in self.keyPressed:
-                motionChange = True
+                motion_change = True
                 self.keyPressed[k] = False
-            
-        if motionChange:
-            velocity = VELOCITYCHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
-            rotation = ROTATIONCHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
+
+        if motion_change:
+            velocity = VELOCITY_CHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
+            rotation = ROTATION_CHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
 
             # compute left and right wheel velocities
-            vr = velocity + (rotation/2)
-            vl = velocity - (rotation/2)
+            vr = velocity + (rotation / 2)
+            vl = velocity - (rotation / 2)
 
             self.robot.drive_direct(vr, vl)
 
@@ -266,7 +256,7 @@ class TetheredDriveApp(tk.Tk):
     #         ports = self.getSerialPorts()
     #     except EnvironmentError:
     #         print "Failed to get serial ports"
-            
+
     #     for port in ports:
     #         if not port.startswith("/dev/ttyUSB"):
     #             continue
@@ -296,7 +286,6 @@ class TetheredDriveApp(tk.Tk):
     #         except:
     #             print "Failed."
     #             tk.tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
-
 
     def onHelp(self):
         tk.tkMessageBox.showinfo('Help', helpText)
@@ -336,7 +325,8 @@ class TetheredDriveApp(tk.Tk):
                 result.append(port)
             except (OSError, serial.SerialException):
                 pass
-        return result    
+        return result
+
 
 if __name__ == "__main__":
     app = TetheredDriveApp()
