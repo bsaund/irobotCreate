@@ -41,8 +41,8 @@ class RemoteSerialServer:
                 self.wait_for_connection()
                 continue
 
-            print(data)
             action, data = pickle.loads(raw_data)
+            print("action {}: data {}".format(action, data))
             response = self.handle_action(action, data)
             print(response)
             self.client.sendall(pickle.dumps(response))
