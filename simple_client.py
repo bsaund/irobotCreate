@@ -8,7 +8,8 @@ class Client:
         self.s.connect(address)
 
     def send(self):
-        self.s.sendall(pickle.dumps(("this", "is", "python")))
+        # self.s.sendall(pickle.dumps(("this", "is", "python")))
+        self.s.send("hello world")
         print(self.s.recv(1024))
 
 

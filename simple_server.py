@@ -25,4 +25,4 @@ class Server:
 
 s = Server()
 s.WaitForConnection()
-s.receive()
+# s.receive()
