@@ -1,4 +1,5 @@
 import socket
+import pickle
 
 
 class Server:
@@ -10,19 +11,18 @@ class Server:
         self.address = None
 
     def WaitForConnection(self):
-        print("Waiting for connection")
-        self.client, self.address = (self.s.accept())
-        print('Got a connection from: {}.'.format(self.address))
+        self.client, self.address = self.s.accept()
+        print('Got a connection from: ' + str(self.client) + '.')
 
     def receive(self):
-        print("Waiting for data")
+        print("Waiting for message")
         for i in range(10):
-            data = self.s.recv(1024)
-            print(data)
+            data = pickle.loads(self.client.recv(1024))
             self.client.sendall("I got your message")
             print(data)
 
 
 s = Server()
 s.WaitForConnection()
-# s.receive()
+
+s.receive()
