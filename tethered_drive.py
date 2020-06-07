@@ -57,7 +57,7 @@ except ImportError:
 TEXT_WIDTH = 40  # window width, in characters
 TEXT_HEIGHT = 48  # window height, in lines
 
-VELOCITY_CHANGE = 200
+VELOCITY_CHANGE = 350
 ROTATION_CHANGE = 300
 
 helpText = """
@@ -159,8 +159,9 @@ class Console(tk.Frame):
 
 
 class TetheredDriveApp(tk.Tk):
-    keyPressed = {s: False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
-    callbackKeyLastDriveCommand = ''
+    key_pressed = {s: False for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
+    key_after_id = {s: None for s in ["UP", "DOWN", "LEFT", "RIGHT"]}
+    callback_key_last_drive_command = ''
 
     def __init__(self):
         tk.Tk.__init__(self)
@@ -202,8 +203,6 @@ class TetheredDriveApp(tk.Tk):
 
     def callbackKeyPress(self, event):
         k = event.keysym.upper()
-        print("Key pressed: {}".format(k))
-        motion_change = False
 
         mode_map = {"P": MODES.PASSIVE,
                     "S": MODES.SAFE,
@@ -217,8 +216,11 @@ class TetheredDriveApp(tk.Tk):
 
         if k in mode_map:
             self.robot.oi_mode = mode_map[k]
-        elif k in self.keyPressed:
-            self.keyPressed[k] = True
+        elif k in self.key_pressed:
+            if self.key_after_id[k] is not None:
+                self.after_cancel(self.key_after_id[k])
+                self.key_after_id[k] = None
+            self.key_pressed[k] = True
             self.send_new_motion()
         elif k in action_map:
             action_map[k]()
@@ -228,18 +230,20 @@ class TetheredDriveApp(tk.Tk):
         else:
             print(repr(k), "not handled")
 
-
     def callbackKeyRelease(self, event):
         k = event.keysym.upper()
-        print("Key released: {}".format(k))
-        if k in self.keyPressed:
-            self.keyPressed[k] = False
-            self.send_new_motion()
+        if k in self.key_pressed:
+            self.key_after_id[k] = self.after(50, self.release_key, event)
+
+    def release_key(self, event):
+        k = event.keysym.upper()
+        self.key_pressed[k] = False
+        self.send_new_motion()
+        self.key_after_id[k] = None
 
     def send_new_motion(self):
-        velocity = VELOCITY_CHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
-        rotation = ROTATION_CHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
-        # print("Keypressed: UP {}, DOWN {}".format(self.keyPressed["UP"], self.keyPressed["DOWN"]))
+        velocity = VELOCITY_CHANGE * (self.key_pressed["UP"] - self.key_pressed["DOWN"])
+        rotation = ROTATION_CHANGE * (self.key_pressed["LEFT"] - self.key_pressed["RIGHT"])
 
         # compute left and right wheel velocities
         vr = velocity + (rotation / 2)
@@ -247,48 +251,6 @@ class TetheredDriveApp(tk.Tk):
 
         self.robot.drive_direct(vr, vl)
 
-            # # create drive command
-            # cmd = struct.pack(">Bhh", 145, vr, vl)
-            # if cmd != self.callbackKeyLastDriveCommand:
-            #     self.robot.sendCommandRaw(cmd)
-            #     self.callbackKeyLastDriveCommand = cmd
-
-    # def onLoad(self):
-
-    #     try:
-    #         ports = self.getSerialPorts()
-    #     except EnvironmentError:
-    #         print "Failed to get serial ports"
-
-    #     for port in ports:
-    #         if not port.startswith("/dev/ttyUSB"):
-    #             continue
-    #         try:
-    #             self.robot.connect(port)
-    #             print "Connected to", port
-    #         except:
-    #             print "Failed to connect to", port
-
-    # def onConnect(self):
-    #     if self.robot.connection is not None:
-    #         tk.tkMessageBox.showinfo('Oops', "You're already connected!")
-    #         return
-
-    #     try:
-    #         ports = self.getSerialPorts()
-    #         port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
-    #     except EnvironmentError:
-    #         port = tk.tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
-
-    #     if port is not None:
-    #         print "Trying " + str(port) + "... "
-    #         try:
-    #             self.robot.connect(port)
-    #             print "Connected!"
-    #             tk.tkMessageBox.showinfo('Connected', "Connection succeeded!")
-    #         except:
-    #             print "Failed."
-    #             tk.tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
 
     def onHelp(self):
         tk.tkMessageBox.showinfo('Help', helpText)
