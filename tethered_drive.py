@@ -183,8 +183,8 @@ class TetheredDriveApp(tk.Tk):
         self.status_window = StatusWindow(self)
         self.status_window.pack(side=tk.RIGHT)
 
-        self.bind("<Key>", self.callbackKey)
-        self.bind("<KeyRelease>", self.callbackKey)
+        self.bind("<Key>", self.callbackKeyPress)
+        self.bind("<KeyRelease>", self.callbackKeyRelease)
 
         self.robot = Bradbot("/dev/ttyUSB0", remote=True)
         self.main_loop()
@@ -200,49 +200,52 @@ class TetheredDriveApp(tk.Tk):
         self.console.text.insert(tk.END, '\n')
         self.console.text.see(tk.END)
 
-    def callbackKey(self, event):
+    def callbackKeyPress(self, event):
         k = event.keysym.upper()
+        print("Key pressed: {}".format(k))
         motion_change = False
 
-        if event.type == '2':  # KeyPress; need to figure out how to get constant
-            mode_map = {"P": MODES.PASSIVE,
-                        "S": MODES.SAFE,
-                        "F": MODES.FULL}
-            action_map = {"C": "clean",
-                          "D": self.robot.seek_dock,
-                          "SPACE": lambda: self.robot.play_song(3),
-                          "R": lambda: self.robot.go_to(0.3, 0),
-                          "1": self.robot.set_katie_song
-                          }
+        mode_map = {"P": MODES.PASSIVE,
+                    "S": MODES.SAFE,
+                    "F": MODES.FULL}
+        action_map = {"C": "clean",
+                      "D": self.robot.seek_dock,
+                      "SPACE": lambda: self.robot.play_song(3),
+                      "R": lambda: self.robot.go_to(0.3, 0),
+                      "1": self.robot.set_katie_song
+                      }
 
-            if k in mode_map:
-                self.robot.oi_mode = mode_map[k]
-            elif k in self.keyPressed:
-                motion_change = True
-                self.keyPressed[k] = True
-            elif k in action_map:
-                action_map[k]()
-            elif k == "Z":
-                # self.robot.sendCommandASCII(ic.beep())
-                self.robot.queryList([6, 17])
-            else:
-                print(repr(k), "not handled")
-        elif event.type == '3':  # KeyRelease; need to figure out how to get constant
-            # print k, "released"
+        if k in mode_map:
+            self.robot.oi_mode = mode_map[k]
+        elif k in self.keyPressed:
+            self.keyPressed[k] = True
+            self.send_new_motion()
+        elif k in action_map:
+            action_map[k]()
+        elif k == "Z":
+            # self.robot.sendCommandASCII(ic.beep())
+            self.robot.queryList([6, 17])
+        else:
+            print(repr(k), "not handled")
 
-            if k in self.keyPressed:
-                motion_change = True
-                self.keyPressed[k] = False
 
-        if motion_change:
-            velocity = VELOCITY_CHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
-            rotation = ROTATION_CHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
+    def callbackKeyRelease(self, event):
+        k = event.keysym.upper()
+        print("Key released: {}".format(k))
+        if k in self.keyPressed:
+            self.keyPressed[k] = False
+            self.send_new_motion()
 
-            # compute left and right wheel velocities
-            vr = velocity + (rotation / 2)
-            vl = velocity - (rotation / 2)
+    def send_new_motion(self):
+        velocity = VELOCITY_CHANGE * (self.keyPressed["UP"] - self.keyPressed["DOWN"])
+        rotation = ROTATION_CHANGE * (self.keyPressed["LEFT"] - self.keyPressed["RIGHT"])
+        # print("Keypressed: UP {}, DOWN {}".format(self.keyPressed["UP"], self.keyPressed["DOWN"]))
 
-            self.robot.drive_direct(vr, vl)
+        # compute left and right wheel velocities
+        vr = velocity + (rotation / 2)
+        vl = velocity - (rotation / 2)
+
+        self.robot.drive_direct(vr, vl)
 
             # # create drive command
             # cmd = struct.pack(">Bhh", 145, vr, vl)
