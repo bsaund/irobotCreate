@@ -179,8 +179,9 @@ class TetheredDriveApp(tk.Tk):
         self.status_window = StatusWindow(self)
         self.status_window.pack(side=tk.RIGHT)
 
-        self.bind("<Key>", self.callbackKeyPress)
-        self.bind("<KeyRelease>", self.callbackKeyRelease)
+        self.bind("<Key>", self.callback_key_press)
+        self.bind("<KeyRelease>", self.callback_key_release)
+        self.bind("<Destroy>", self.callback_destroy)
 
         self.robot = Bradbot("/dev/ttyUSB0", remote=True)
         self.main_loop()
@@ -190,13 +191,10 @@ class TetheredDriveApp(tk.Tk):
         self.status_window.refresh_labels(self.robot)
         self.after(100, self.main_loop)
 
-    def sendCommandCallback(self, command):
-        print(' '.join([str(ord(c)) for c in command]))
-        self.console.text.insert(tk.END, ' '.join([str(ord(c)) for c in command]))
-        self.console.text.insert(tk.END, '\n')
-        self.console.text.see(tk.END)
+    def callback_destroy(self, event):
+        self.robot.is_running = False
 
-    def callbackKeyPress(self, event):
+    def callback_key_press(self, event):
         k = event.keysym.upper()
 
         mode_map = {"P": MODES.PASSIVE,
@@ -222,7 +220,7 @@ class TetheredDriveApp(tk.Tk):
         else:
             print(repr(k), "not handled")
 
-    def callbackKeyRelease(self, event):
+    def callback_key_release(self, event):
         k = event.keysym.upper()
         if k in self.key_pressed:
             self.key_after_id[k] = self.after(50, self.release_key, event)

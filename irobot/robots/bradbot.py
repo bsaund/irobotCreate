@@ -22,8 +22,8 @@ class Bradbot(create2.Create2):
         self.err_limit = None
         self.vel = None
         self.moving = False
-        self.left_controller = RampController(max_accel=500)
-        self.right_controller = RampController(max_accel=500)
+        self.left_controller = RampController(max_accel=1000)
+        self.right_controller = RampController(max_accel=1000)
         self.prev_sent_velocities = [0, 0]  # [left, right]
         self.send_vel_thread = threading.Thread(target=self.send_updated_velocity_thread)
         self.send_vel_thread.start()
@@ -39,6 +39,7 @@ class Bradbot(create2.Create2):
             if [dl, dr] != self.prev_sent_velocities:
                 self.prev_sent_velocities = [dl, dr]
                 self.drive_direct(dr, dl)
+                print("Sending new velocity: {}, {}".format(dl, dr))
             time.sleep(0.05)
 
     def set_velocity_target(self, left, right):

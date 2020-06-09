@@ -64,11 +64,12 @@ class RampController:
         self.target = target
 
     def get_current_value(self):
-        if self.target is None:
-            return self.current_value
         now = time.time()
         dt = now - self.last_update_time
         self.last_update_time = now
+
+        if self.target is None:
+            return self.current_value
 
         dx = self.target - self.current_value
         if np.abs(dx) < dt * self.accel:
@@ -77,4 +78,3 @@ class RampController:
 
         self.current_value += dt * self.accel * np.sign(dx)
         return self.current_value
-
