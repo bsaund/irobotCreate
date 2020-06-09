@@ -28,22 +28,18 @@ class Bradbot(create2.Create2):
         self.send_vel_thread = threading.Thread(target=self.send_updated_velocity_thread)
         self.send_vel_thread.start()
 
-    def __del__(self):
-        print("Deleting")
-        self.is_running = False
-
     def send_updated_velocity_thread(self):
         while self.is_running:
             # print("Running update velocity thread")
             dl, dr = self.left_controller.get_current_value(), self.right_controller.get_current_value()
-            if [dl, dr] != self.prev_sent_velocities:
+            if not (dl == self.prev_sent_velocities[0] and dr == self.prev_sent_velocities[1]):
                 self.prev_sent_velocities = [dl, dr]
                 self.drive_direct(dr, dl)
-                print("Sending new velocity: {}, {}".format(dl, dr))
+                print("Sending new velocity: {}, {}".format(dl, dr,))
             time.sleep(0.05)
 
     def set_velocity_target(self, left, right):
-        print("Setting new velocity: {}, {}".format(left, right))
+        # print("Setting new velocity: {}, {}".format(left, right))
         self.left_controller.set_target(left)
         self.right_controller.set_target(right)
 
