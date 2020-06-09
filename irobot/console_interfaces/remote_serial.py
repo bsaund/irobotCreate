@@ -2,6 +2,7 @@ import socket
 import pickle
 import serial
 import argparse
+import threading
 
 PORT = 8000
 MSG_SIZE = 2048
@@ -74,10 +75,12 @@ class RemoteSerialClient:
         address = (ip, port)
         self.s = socket.socket()
         self.s.connect(address)
+        self.lock = threading.RLock()
 
     def send(self, action, data=None):
-        self.s.sendall(pickle.dumps((action, data)))
-        return pickle.loads(self.s.recv(MSG_SIZE))
+        with self.lock:
+            self.s.sendall(pickle.dumps((action, data)))
+            return pickle.loads(self.s.recv(MSG_SIZE))
 
     def write(self, data):
         response = self.send("write", data)

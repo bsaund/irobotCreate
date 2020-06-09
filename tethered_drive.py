@@ -39,7 +39,7 @@ from __future__ import print_function
 
 import Tkinter as tk
 import tkMessageBox
-from irobotCreate.createlvl2 import Bradbot
+from irobot.robots.bradbot import Bradbot
 from irobot.openinterface.constants import MODES
 import label_mappings as lm
 
@@ -241,7 +241,8 @@ class TetheredDriveApp(tk.Tk):
         vr = velocity + (rotation / 2)
         vl = velocity - (rotation / 2)
 
-        self.robot.drive_direct(vr, vl)
+        # self.robot.drive_direct(vr, vl)
+        self.robot.set_velocity_target(vl, vr)
 
     def onHelp(self):
         tkMessageBox.showinfo('Help', helpText)
