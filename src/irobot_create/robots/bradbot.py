@@ -7,6 +7,8 @@ from irobot_create.control.pid import RampController
 import threading
 import time
 import rospy
+import tf2_ros
+import geometry_msgs.msg
 
 
 class Bradbot(create2.Create2):
@@ -28,6 +30,7 @@ class Bradbot(create2.Create2):
         self.prev_sent_velocities = [0, 0]  # [left, right]
         self.send_vel_thread = threading.Thread(target=self.send_updated_velocity_thread)
         self.send_vel_thread.start()
+        self.transform_broadcaster = tf2_ros.TransformBroadcaster()
 
     def send_updated_velocity_thread(self):
         while self.is_running:
@@ -50,6 +53,20 @@ class Bradbot(create2.Create2):
     def update_from_sensors(self):
         self.read_irobot_data()
         self.pos.update(self.irobot_data.left_encoder_counts, self.irobot_data.right_encoder_counts)
+        self.publish_pose()
+
+    def publish_pose(self):
+        t = geometry_msgs.msg.TransformStamped()
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = "world"
+        t.child_frame_id = "bradbot"
+        t.transform.translation.x = self.pos.x
+        t.transform.translation.y = self.pos.y
+        s = np.sin(self.pos.theta)
+        t.transform.rotation.w = np.sqrt(1 - s**2)
+        t.transform.rotation.z = s
+        self.transform_broadcaster.sendTransform(t)
+
 
     def is_bump(self):
         bumps = self.irobot_data.bumps_and_wheel_drops

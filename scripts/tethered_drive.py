@@ -41,7 +41,7 @@ import Tkinter as tk
 import tkMessageBox
 from irobot_create.robots.bradbot import Bradbot
 from irobot_create.openinterface.constants import MODES
-import label_mappings as lm
+import irobot_create.openinterface.label_mappings as lm
 import rospy
 
 try:
