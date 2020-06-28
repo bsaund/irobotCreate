@@ -64,6 +64,7 @@ F\tFull
 C\tClean
 D\tDock
 R\tReset
+V\tVacuum motor on
 Space\tBeep
 Arrows\tMotion
 
@@ -205,7 +206,8 @@ class TetheredDriveApp(tk.Tk):
                       "D": self.robot.seek_dock,
                       "SPACE": lambda: self.robot.play_song(3),
                       "R": lambda: self.robot.go_to(0.3, 0),
-                      "1": self.robot.set_katie_song
+                      "1": self.robot.set_katie_song,
+                      "V": lambda: self.robot.set_motors(vacuum=True)
                       }
 
         if k in mode_map:

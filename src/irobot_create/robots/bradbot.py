@@ -9,6 +9,7 @@ import time
 import rospy
 import tf2_ros
 import geometry_msgs.msg
+import tf_conversions
 
 
 class Bradbot(create2.Create2):
@@ -56,17 +57,26 @@ class Bradbot(create2.Create2):
         self.publish_pose()
 
     def publish_pose(self):
+        q = tf_conversions.transformations.quaternion_from_euler(0, 0, -self.pos.theta)
+        q = tf_conversions.transformations.quaternion_matrix(q)
+        translation = tf_conversions.transformations.translation_matrix([self.pos.x, self.pos.y, 0])
+        transform = np.dot(translation, q)
+
         t = geometry_msgs.msg.TransformStamped()
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "world"
         t.child_frame_id = "bradbot"
-        t.transform.translation.x = self.pos.x
-        t.transform.translation.y = self.pos.y
-        s = np.sin(self.pos.theta)
-        t.transform.rotation.w = np.sqrt(1 - s**2)
-        t.transform.rotation.z = s
-        self.transform_broadcaster.sendTransform(t)
 
+        pose = tf_conversions.posemath.toMsg(tf_conversions.fromMatrix(transform))
+        t.transform.translation.x = pose.position.x
+        t.transform.translation.y = pose.position.y
+        t.transform.translation.z = pose.position.z
+        t.transform.rotation.w = pose.orientation.w
+        t.transform.rotation.x = pose.orientation.x
+        t.transform.rotation.y = pose.orientation.y
+        t.transform.rotation.z = pose.orientation.z
+
+        self.transform_broadcaster.sendTransform(t)
 
     def is_bump(self):
         bumps = self.irobot_data.bumps_and_wheel_drops

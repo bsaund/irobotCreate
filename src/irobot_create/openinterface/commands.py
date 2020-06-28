@@ -123,7 +123,7 @@ def set_motors(main_brush_on, main_brush_reverse, side_brush, side_brush_reverse
     if side_brush_reverse:
         motors |= MOTORS.SIDE_BRUSH_DIRECTION
     if vacuum:
-        motors |= MOTORS.SIDE_VACUUM
+        motors |= MOTORS.VACUUM
 
     return pack_signed_byte(138, motors)
 
