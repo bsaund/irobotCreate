@@ -71,7 +71,7 @@ class RemoteSerialServer:
 
 
 class RemoteSerialClient:
-    def __init__(self, ip="192.168.1.54", port=PORT):
+    def __init__(self, ip="192.168.1.188", port=PORT):
         address = (ip, port)
         self.s = socket.socket()
         self.s.connect(address)
