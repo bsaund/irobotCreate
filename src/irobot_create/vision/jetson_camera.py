@@ -14,3 +14,4 @@ def get_image_msg(camera):
     m.width = width
     m.height = height
     m.data = img
+    return m
