@@ -1,8 +1,9 @@
 import jetson.utils
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
 import IPython
+import cv2
 
 
 def open_camera():
@@ -11,11 +12,14 @@ def open_camera():
 
 
 def get_image_msg(camera):
-    img, width, height = camera.CaptureRGBA(zeroCopy=True)
+    img_gpu, width, height = camera.CaptureRGBA(zeroCopy=True)
     m = Image()
     m.width = width
     m.height = height
-    m.data = jetson.utils.cudaToNumpy(img, width, height, 4).astype(np.uint8).flatten().tolist()
-    m.encoding="rgba8"
+    img = jetson.utils.cudaToNumpy(img_gpu, width, height, 4).astype(np.uint8)
+    # m.data = img.flatten().tolist()
+    m.data = np.array(cv2.imencode(".jpg", img)[1]).tostring()
+    m.format = "jpeg"
+    # m.encoding="rgba8"
     # IPython.embed()
     return m
