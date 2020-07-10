@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     camera = jetson_camera.open_camera()
 
-    pub = rospy.Publisher("/bradbot_camera", CompressedImage, queue_size=1)
+    pub = rospy.Publisher("/bradbot_camera/compressed", CompressedImage, queue_size=1)
 
     while not rospy.is_shutdown():
         pub.publish(jetson_camera.get_image_msg(camera))

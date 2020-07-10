@@ -13,9 +13,9 @@ def open_camera():
 
 def get_image_msg(camera):
     img_gpu, width, height = camera.CaptureRGBA(zeroCopy=True)
-    m = Image()
-    m.width = width
-    m.height = height
+    m = CompressedImage()
+    # m.width = width
+    # m.height = height
     img = jetson.utils.cudaToNumpy(img_gpu, width, height, 4).astype(np.uint8)
     # m.data = img.flatten().tolist()
     m.data = np.array(cv2.imencode(".jpg", img)[1]).tostring()
