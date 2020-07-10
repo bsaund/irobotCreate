@@ -16,8 +16,10 @@ def get_image_msg(camera):
     m = CompressedImage()
     # m.width = width
     # m.height = height
-    img = jetson.utils.cudaToNumpy(img_gpu, width, height, 4).astype(np.uint8)
+    jetson.utils.cudaDeviceSynchronize()
+    img_rgb = jetson.utils.cudaToNumpy(img_gpu, width, height, 4).astype(np.uint8)
     # m.data = img.flatten().tolist()
+    img = cv2.cvtColor(img_rgb, cv2.COLOR_BGRA2RGBA)
     m.data = np.array(cv2.imencode(".jpg", img)[1]).tostring()
     m.format = "jpeg"
     # m.encoding="rgba8"
