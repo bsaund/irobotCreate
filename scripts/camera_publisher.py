@@ -13,4 +13,4 @@ if __name__ == "__main__":
 
     while not rospy.is_shutdown():
         pub.publish(jetson_camera.get_image_msg(camera))
-        rospy.Rate(2).sleep()
+        rospy.Rate(10).sleep()
