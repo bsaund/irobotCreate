@@ -1,0 +1,10 @@
+<launch>
+  <!-- local machine already has a definition by default.
+       This tag overrides the default definition with
+       specific ROS_ROOT and ROS_PACKAGE_PATH values -->
+
+  <node name="server_on_robot" pkg="irobot_create" type="server_on_robot.py" />
+  <node name="image_publisher" pkg="irobot_create" type="camera_publisher.py" />
+
+
+</launch>
