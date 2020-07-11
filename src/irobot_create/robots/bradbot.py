@@ -32,6 +32,19 @@ class Bradbot(create2.Create2):
         self.send_vel_thread = threading.Thread(target=self.send_updated_velocity_thread)
         self.send_vel_thread.start()
         self.transform_broadcaster = tf2_ros.TransformBroadcaster()
+        self.control_thread = None
+
+    def shutdown(self):
+        self.is_running = False
+
+    def start_control_loop_thread(self, rate=10):
+        def async_control_loop():
+            while self.is_running and not rospy.is_shutdown():
+                self.control_loop()
+                rospy.Rate(rate).sleep()
+
+        self.control_thread = threading.Thread(target=async_control_loop)
+        self.control_thread.start()
 
     def send_updated_velocity_thread(self):
         while self.is_running:
@@ -78,7 +91,7 @@ class Bradbot(create2.Create2):
 
         self.transform_broadcaster.sendTransform(t)
 
-    def is_bump(self):
+    def is_bumping(self):
         bumps = self.irobot_data.bumps_and_wheel_drops
         if bumps.bump_left or bumps.bump_right:
             return True
@@ -102,15 +115,16 @@ class Bradbot(create2.Create2):
             print("Reached! Stopping")
             self.moving = False
 
-        if self.is_bump():
-            print("Bumped! Stopping")
+        vr, vl = self.simple_control(self.x_target, self.y_target, self.vel)
+
+        if self.is_bumping() and vr + vl > 0:
+            print("Bumped! Stopping. Will not move forward")
             self.moving = False
 
         if not self.moving:
             self.drive_direct(0, 0)
             return
 
-        vr, vl = self.simple_control(self.x_target, self.y_target, self.vel)
         self.drive_direct(vr, vl)
 
     def go_to(self, x_target, y_target, vel=400, err_limit=0.05):
