@@ -28,10 +28,10 @@ def move_forward_until_bump(bradbot):
 
 
 def random_turn(bradbot):
-    direction = 1 - 2 * (np.random.random() > 0.5)
+    direction = 1 - 2 * (np.random.random() > 0.8)
     s = direction * ROAM_SPEED
     bradbot.set_velocity_target(s, -s)
-    turn_time = 100 * (1 + np.random.random()) / ROAM_SPEED
+    turn_time = 100 * (0.5 + np.random.random()) / ROAM_SPEED
     rospy.sleep(turn_time)
     bradbot.set_velocity_target(0, 0)
 
