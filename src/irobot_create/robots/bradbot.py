@@ -100,6 +100,11 @@ class Bradbot(create2.Create2):
             return True
         return False
 
+    def cliff_sensed(self):
+        s = self.irobot_data
+        return s.cliff_left_sensor or s.cliff_front_left_sensor or \
+               s.cliff_front_right_sensor or s.cliff_front_right_sensor
+
     def control_loop(self):
         """
         Main control loop. Call this to keep this periodically to keep the robot sensing and moving
