@@ -33,6 +33,8 @@ class Bradbot(create2.Create2):
         self.send_vel_thread.start()
         self.transform_broadcaster = tf2_ros.TransformBroadcaster()
         self.control_thread = None
+        self.time_in_stasis = 0.0
+        self.time_of_last_sensor_read = time.time()
 
     def shutdown(self):
         self.is_running = False
@@ -66,6 +68,13 @@ class Bradbot(create2.Create2):
 
     def update_from_sensors(self):
         self.read_irobot_data()
+
+        self.time_in_stasis += time.time() - self.time_of_last_sensor_read
+        if self.irobot_data.stasis.toggling:
+            self.time_in_stasis = 0.0
+
+        self.time_of_last_sensor_read = time.time()
+
         self.pos.update(self.irobot_data.left_encoder_counts, self.irobot_data.right_encoder_counts)
         self.publish_pose()
 

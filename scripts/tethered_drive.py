@@ -87,7 +87,9 @@ info_fields = ["Mode",
                "charging state",
                "battery charge",
                "encoder",
-               "status",
+               "stasis toggling",
+               "stasis disabled",
+               "time in stasis",
                "pos"]
 
 
@@ -139,8 +141,11 @@ class StatusWindow(tk.Frame):
         self.set_label("battery charge", "%i / %i (mAh)" % (all_sensors.battery_charge, all_sensors.battery_capacity))
 
         self.set_label("encoder", "%i, %i" % (all_sensors.left_encoder_counts, all_sensors.right_encoder_counts))
-        self.set_label("status", all_sensors.stasis.toggling)
+        self.set_label("stasis toggling", all_sensors.stasis.toggling)
+        self.set_label("stasis disabled", all_sensors.stasis.disabled)
+        self.set_label("time in stasis", "%2f" % robot.time_in_stasis)
         self.set_label("pos", "%.2f, %.2f, %.1f" % (robot.pos.x, robot.pos.y, robot.pos.theta))
+
 
 
 class Console(tk.Frame):
