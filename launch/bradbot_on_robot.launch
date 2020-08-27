@@ -4,7 +4,10 @@
        specific ROS_ROOT and ROS_PACKAGE_PATH values -->
 
   <node name="server_on_robot" pkg="irobot_create" type="server_on_robot.py" output="screen"/>
-  <node name="image_publisher" pkg="irobot_create" type="camera_publisher.py" />
+  <!--
+    <node name="image_publisher" pkg="irobot_create" type="camera_publisher.py" />
+  -->
+  <node name="processed_image_publisher" pkg="irobot_create" type="image_detector.py"/>
   <node name="irobot_marker_pub" pkg="irobot_create" type="irobot_pub.py" />
 
 

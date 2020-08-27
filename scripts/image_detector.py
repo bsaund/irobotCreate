@@ -4,42 +4,28 @@ import jetson.utils
 import rospy
 from sensor_msgs.msg import Image, CompressedImage
 
-# import IPython
+#!/usr/bin/env python
 
-net = jetson.inference.detectNet("ssd-mobilenet-v2", threshold=0.5)
-pub = None
-# net = jetson.inference.detectNet("facenet-120", threshold=0.5)
-# camera = jetson.utils.gstCamera(1280, 720, "0")
-# camera = jetson.utils.gstCamera(1280, 720, "/dev/video1")
-# display = jetson.utils.glDisplay()
-#
-# while display.IsOpen():
-#     img, width, height = camera.CaptureRGBA()
-#     detections = net.Detect(img, width, height)
-#     # print(detections)
-#     # IPython.embed()
-#     # if len(detections) > 0:
-#     #     print(detections[0].ClassID)
-#
-#     people = [d for d in detections if d.ClassID == 1]
-#     if len(people) > 0:
-#         c = people[0].Center[0]
-#
-#         if c < width / 3:
-#             print("Left")
-#         elif c > width * 2 / 3:
-#             print("Right")
-#         else:
-#             print("I see you!")
-#
-#     display.RenderOnce(img, width, height)
-#     display.SetTitle("Object Detection | Network {:.0f} FPS".format(net.GetNetworkFPS()))
-def process_image(msg):
-    pub.publish(msg)
-
+from irobot_create.vision import jetson_camera
+import rospy
+from sensor_msgs.msg import Image, CompressedImage
 
 if __name__ == "__main__":
-    rospy.init_node("image_detection")
-    pub = rospy.Publisher('bradbot_processed/compressed', CompressedImage, queue_size=1)
-    sub = rospy.Subscriber('bradbot_camera/compressed', CompressedImage, process_image)
-    rospy.spin()
+    rospy.init_node("image_detection_publisher")
+
+    camera = jetson_camera.open_camera()
+    net = jetson.inference.detectNet("ssd-mobilenet-v2", threshold=0.5)
+
+    pub = rospy.Publisher("/bradbot_vision_processed/compressed", CompressedImage, queue_size=1)
+    pub_raw = rospy.Publisher("/bradbot_camera/compressed", CompressedImage, queue_size=1)
+
+    while not rospy.is_shutdown():
+        img, width, height = camera.CaptureRGBA(zeroCopy=True)
+
+        # pub_raw.publish(jetson_camera.gpu_img_to_img_msg(img, width, height))
+        
+        detections = net.Detect(img, width, height)
+        
+        # pub.publish(jetson_camera.get_image_msg(camera))
+        pub.publish(jetson_camera.gpu_img_to_img_msg(img, width, height))
+        # rospy.Rate(10).sleep()
