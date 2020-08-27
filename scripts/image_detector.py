@@ -40,6 +40,6 @@ def process_image(msg):
 
 if __name__ == "__main__":
     rospy.init_node("image_detection")
-    pub = rospy.Publisher('bradbot_processed/compressed', CompressedImage)
+    pub = rospy.Publisher('bradbot_processed/compressed', CompressedImage, queue_size=1)
     sub = rospy.Subscriber('bradbot_camera/compressed', CompressedImage, process_image)
-    rospy.spin
+    rospy.spin()
